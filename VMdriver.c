@@ -153,7 +153,7 @@ int main( )
          case 3:  // Touch pages in a block.
             for(int i = 0;i < units;i++)
             {
-               printf("Touching Page %d\n",(int *)vmAddress + i);
+               printf("Touching Page %d\n",(char *)vmAddress + 4096 * i);
             }
             break;
          case 4:  // Lock a block of pages.
