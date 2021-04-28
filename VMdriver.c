@@ -79,10 +79,7 @@ int main( )
    // GetCurrentProcessId() to get this program's PID at
    // runtime. Use CreateProcess() to start VMmapper.exe.
    
-   SYSTEM_INFO sInfo;
-   GetSystemInfo(&sInfo);
-   
-   char buffer [50];
+   char buffer [100];
    sprintf(buffer,"%s %d","VMmapper.exe",GetCurrentProcessId());
    
    PROCESS_INFORMATION processInfo;
@@ -103,10 +100,6 @@ int main( )
                      &processInfo))
          {
             printError("CreateProcess");
-         }
-         else
-         {
-            printf("\n Started VMmapper with ipd = %d\n", (int)processInfo.dwProcessId);
          }
    
    Sleep(5000);  // give VMmapper.exe time to start
@@ -137,53 +130,58 @@ int main( )
             break;
          case 6:
             access_bit = PAGE_NOACCESS;
-            break;  
+            break;
       }
       
       // Parse the command and execute it.
       switch (vmOp)
       {
          case 1:  // Reserve a region.
-            VirtualAlloc( vmAddress,
-                          units*65536,
+            if(!VirtualAlloc( vmAddress,
+                          units * 65536,
                           MEM_RESERVE,
-                          access_bit);
+                          access_bit))
+               printError("VirtualAlloc");
             break;
          case 2:  // Commit a block of pages.
-            VirtualAlloc( vmAddress,
-                          units*4096,
+            if(!VirtualAlloc( vmAddress,
+                          units * 4096,
                           MEM_COMMIT,
-                          access_bit);
+                          access_bit))
+               printError("VirtualAlloc");
             break;
          case 3:  // Touch pages in a block.
             for(int i = 0;i < units;i++)
             {
-               printf("Touching Page 0x%p\n",(char *)vmAddress + 4096 * i);
+               printf("Touching Page %d\n",(int *)vmAddress + i);
             }
             break;
          case 4:  // Lock a block of pages.
             VirtualLock( vmAddress,
-                         units * sInfo.dwPageSize);
+                         units);
             break;
          case 5:  // Unlock a block of pages.
             VirtualUnlock( vmAddress,
-                         units * sInfo.dwPageSize);
+                         units);
             break;
          case 6:  // Create a guard page.
-            VirtualAlloc( vmAddress,
-                          units * sInfo.dwPageSize,
-                          MEM_RESERVE | MEM_COMMIT,
-                          access_bit | PAGE_GUARD);
+            if(!VirtualAlloc( vmAddress,
+                          units * 4096,
+                          MEM_COMMIT,
+                          access_bit | PAGE_GUARD))
+               printError("VirtualAlloc");
             break;
          case 7:  // Decommit a block of pages.
-            VirtualFree(vmAddress, 
-                        units * sInfo.dwPageSize,
-                        MEM_DECOMMIT);
+            if(!VirtualFree(vmAddress,
+                       0,
+                       MEM_DECOMMIT))
+               printError("VirtualFree");
             break;
          case 8:  // Release a region.
-            VirtualFree(vmAddress, 
-                        units * sInfo.dwPageSize,
-                        MEM_RELEASE);
+            if(!VirtualFree(vmAddress,
+                       0,
+                       MEM_RELEASE))
+               printError("VirtualFree");
             break;
       }//switch
       printf("Processed %d %d 0x%p %d %d\n", time, vmOp, vmAddress, units, access_code);
