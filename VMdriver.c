@@ -72,7 +72,7 @@ int main( )
    int time, vmOp, units, access_code;
    LPVOID vmAddress;
    int access_bit;
-   
+   int temp;
    // You need to provide the code that starts up the
    // VMmapper.exe program with the PID of this program
    // on VMmapper's command line. Use the Windows function
@@ -108,6 +108,7 @@ int main( )
    printf("next VM command: ");
    while(scanf("%d%d%p%d%d", &time, &vmOp, &vmAddress, &units, &access_code) == 5)
    {
+      char *address = (char*)vmAddress;
       // Wait until it is time to execute the command.
       Sleep(time*1000);
       
@@ -153,7 +154,7 @@ int main( )
          case 3:  // Touch pages in a block.
             for(int i = 0;i < units;i++)
             {
-               printf("Touching Page %d\n",(char *)vmAddress + 4096 * i);
+               temp = *(int*)(address + 4096 * i);
             }
             break;
          case 4:  // Lock a block of pages.
